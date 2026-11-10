@@ -18,16 +18,12 @@ pip install numpy opencv-python imutils matplotlib scikit-learn pandas jupyter
 ## Utilisation
 
 1. Dans `creation_dataset.ipynb`, exécuter toutes les cellules. Cela génère `X1.pickle` et `y1.pickle` (1 566 images).
-2. Dans `train_model.ipynb`, ne pas utiliser « Run All », car l'ancienne cellule de l'Étape 6 s'arrête sur une erreur. Exécuter dans cet ordre :
-   - la première cellule de code ;
-   - la cellule de code de l'Étape 1 ;
-   - la cellule de code de l'Étape 3 ;
-   - les 6 cellules de code sous l'Étape 9, de haut en bas (environ 5 minutes).
-3. Vérifier le résultat dans la dernière cellule : exactitude d'environ 96,6 % et F1 macro d'environ 0,96.
+2. Dans `train_model.ipynb`, exécuter toutes les cellules
+3. Vérifier le résultat de la Partie 6 : exactitude d'environ 96,6 % et F1 macro d'environ 0,96.
 
 ## Tester une image
 
-Après les cellules des Étapes 1 et 3, exécuter la cellule située sous « Correction du bug d'évaluation », puis la cellule de l'Étape 8. Pour changer d'image, modifier le chemin relatif :
+La dernière cellule de `train_model.ipynb` teste une image avec le modèle final. Pour changer d'image, modifier le chemin relatif :
 
 ```python
 chemin_photo = "EnsembleA/Cercles/Cercle2/269_Cercle2.jpg"
