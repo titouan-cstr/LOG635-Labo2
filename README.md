@@ -9,22 +9,24 @@
 - Bibliothèques Python :
 
 ```bash
-pip install numpy opencv-python matplotlib jupyter
+pip install numpy opencv-python imutils matplotlib scikit-learn pandas jupyter
 ```
 
-- Le dossier d'images de la base de données, accessible depuis `creation_dataset.ipynb`
-- Tous les fichiers du projet dans le même dossier (notebooks et `.pickle`)
+- Le dossier `EnsembleA` à la racine du projet
+- Jupyter lancé depuis la racine du projet
 
 ## Utilisation
 
-1. Lancer `creation_dataset.ipynb` (toutes les cellules) pour générer `X1.pickle` et `y1.pickle`.
-2. Lancer `train_model.ipynb` (toutes les cellules, dans l'ordre) pour entraîner le modèle.
-3. Pour tester une image, modifier le chemin dans la **dernière cellule** de `train_model.ipynb` :
+1. Dans `creation_dataset.ipynb`, exécuter toutes les cellules. Cela génère `X1.pickle` et `y1.pickle` (1 566 images).
+2. Dans `train_model.ipynb`, exécuter toutes les cellules
+3. Vérifier le résultat de la Partie 6 : exactitude d'environ 96,6 % et F1 macro d'environ 0,96.
+
+## Tester une image
+
+La dernière cellule de `train_model.ipynb` teste une image avec le modèle final. Pour changer d'image, modifier le chemin relatif :
 
 ```python
-# --- EXEMPLE D'UTILISATION ---
-chemin_photo = "/Chemin/vers/une/photo/exemple/269_Cercle2.jpg"   # <-- à modifier
-predire_image_brute(chemin_photo, nn_evaluated, X_features_mean, X_features_std)
+chemin_photo = "EnsembleA/Cercles/Cercle2/269_Cercle2.jpg"
 ```
 
 Le notebook affiche la ROI détectée, la classe prédite et la confiance.
