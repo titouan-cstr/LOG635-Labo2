@@ -17,13 +17,17 @@ pip install numpy opencv-python imutils matplotlib scikit-learn pandas jupyter
 
 ## Utilisation
 
-1. Dans `creation_dataset.ipynb`, exécuter toutes les cellules. Cela génère `X1.pickle` et `y1.pickle` (1 566 images).
-2. Dans `train_model.ipynb`, exécuter toutes les cellules
-3. Vérifier le résultat de la Partie 6 : exactitude d'environ 96,6 % et F1 macro d'environ 0,96.
+Tout le laboratoire est dans un seul notebook : `LOG635_Lab2.ipynb`.
+
+1. Exécuter toutes les cellules dans l'ordre.
+2. La Partie 4 génère `X1.pickle` et `y1.pickle` (1 566 images) ainsi que le dossier `EnsembleB/` : les 1 514 ROI uniques en PNG 64×64, classées par étiquette (à remettre dans le .zip).
+3. Vérifier le résultat de la Partie 6 : exactitude moyenne d'environ 95,1 % et F1 macro d'environ 0,948.
+
+Le rapport est dans `Rapport_Lab2.md` (figures dans `rapport_images/`).
 
 ## Tester une image
 
-La dernière cellule de `train_model.ipynb` teste une image avec le modèle final. Pour changer d'image, modifier le chemin relatif :
+La section « Complément : tester une image brute » (après la Partie 6) teste une image avec le modèle final. Pour changer d'image, modifier le chemin relatif :
 
 ```python
 chemin_photo = "EnsembleA/Cercles/Cercle2/269_Cercle2.jpg"
