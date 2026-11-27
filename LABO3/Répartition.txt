@@ -1,0 +1,39 @@
+```
+# Labo 3 – Répartition des tâches (équipe de 4)
+
+> Tout le monde : commenter son code (crit. 14) et rédiger sa section du rapport.
+
+## Personne 1 – Monde virtuel et scénario (~22 %)
+- Plateau : ≥ 6 pièces, 6 armes, 6 personnages, avec un ordre des pièces pour la navigation (crit. 4)
+- Associations dynamiques personne/arme/pièce/heure fournies à l'exécution, sans relation codée en dur (crit. 5)
+- Fichier `.txt` des faits de départ et chargement au démarrage (crit. 1.1)
+- Conception de l'enquête : chronologie, circonstances, fausses pistes, solution (crit. 7)
+- **Rapport** : description du scénario et des faits
+
+## Personne 2 – Règles FOL et déduction (~22 %)
+- Base de connaissances AIMA : faits de base (corde → étrangler, poison → salle de bain, etc.)
+- Règles d'inférence en logique du premier ordre, croisées et non séquentielles : accès à l'arme, présence dans la pièce, fenêtre de temps, alibi (crit. 6)
+- Requêtes QUI / COMMENT / OÙ / QUAND et phrase finale « X a tué M. Black dans … avec … à …h » (crit. 9)
+- **Rapport** : règles expliquées avec un exemple (crit. 10)
+
+## Personne 3 – Grammaire NLTK et questions (~22 %)
+- Grammaire non contextuelle (`.fcfg`) qui transforme les phrases françaises en FOL : « X était dans Y à Zh », « C'est un couteau », « Tu es dans la cuisine », Oui/Non (crit. 8)
+- Saisie de faits au clavier dans la console (crit. 1.2)
+- Affichage des messages de l'IA à l'écran (crit. 1.3)
+- Génération des questions selon ce qui manque à la base : « Où suis-je? », « Qu'est-ce que c'est? », « Est-ce Colonel Moutarde? » (crit. 7, volet questions)
+- **Rapport** : grammaire expliquée avec un exemple, technique de génération des questions (crit. 11, 12)
+
+## Personne 4 – Voix, clavier, intégration et vidéo (~22 %)
+- Reconnaissance vocale avec `speech_recognition`, au moins 1 fois (crit. 2.1)
+- Synthèse vocale avec `pyttsx3` ou `gTTS`, au moins 1 fois (crit. 2.2)
+- Flèches : → suivante, ← précédente, ↑ première, ↓ dernière (crit. 3.1)
+- Touches 1 = oui et 2 = non pour répondre (crit. 3.2)
+- Boucle principale qui relie tous les modules
+- Vidéo commentée : console visible, exécution complète du début à la déduction (crit. 13)
+- Assemblage final du PDF et remise sur Moodle
+
+## Interfaces à fixer ensemble dès le départ
+- Format des prédicats FOL (ex. `Personne_Piece_Heure(Moutarde, Cuisine, 8)`) : **P1 + P2 + P3**
+- Liste des entités (noms exacts) : **P1 → tous**
+- API `ask(question) -> réponse` (texte, voix ou touches) : **P3 + P4**
+```
