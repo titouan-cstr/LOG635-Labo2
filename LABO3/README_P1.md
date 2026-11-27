@@ -1,6 +1,6 @@
 # Partie 1 — Monde virtuel et scénario (`README_P1.md`)
 
-Ce document décrit le travail de la **Personne 1** pour le Laboratoire 3 de LOG635 : représentation du manoir virtuel, entités officielles, navigation entre les pièces, chargement des faits initiaux et scénario d'enquête.
+Ce document décrit le travail de la **Personne 1** pour le Laboratoire 3 de LOG635 : représentation du manoir virtuel, entités officielles, navigation entre les pièces, associations dynamiques, chargement des faits initiaux et scénario d'enquête.
 
 ---
 
@@ -38,20 +38,56 @@ La classe `ManorBoard` modélise le manoir virtuel sous forme d'une liste ordonn
 | Position actuelle | `board.current_room()` | Retourne le nom de la pièce courante |
 | Infos d'affichage | `board.get_navigation_info()` | Retourne `{current_room, index, total, prev_room, next_room}` |
 
-Exemple d'utilisation :
+---
+
+## 3. Associations dynamiques et suivi de l'état du monde ([world.py](world.py))
+
+Au démarrage, le plateau ne contient **aucune relation codée en dur** entre les pièces, les armes et les personnes (Critère #5). Toutes les informations sont enregistrées dynamiquement à l'exécution selon les faits fournis par l'utilisateur ou le fichier de départ.
+
+### Méthodes d'enregistrement (utilisées quand P3/P4 interprètent une réponse)
+
+| Méthode | Rôle |
+| --- | --- |
+| `board.mark_room_visited(room=None, name_confirmed=True)` | Marque une pièce (courante par défaut) comme visitée |
+| `board.place_weapon(weapon, room=None)` | Associe une arme à une pièce (déplace l'arme si elle était ailleurs) |
+| `board.place_person(person, room=None, hour=None)` | Sans `hour` : position actuelle ; avec `hour` (`0..24`) : passage horodaté |
+| `board.record_clue(clue, room=None)` | Enregistre un indice observé dans la pièce |
+| `board.set_person_status(person, status, hour=None)` | Enregistre `"mort"` (définit la victime et l'heure du crime) ou `"vivant"` |
+| `board.reset_associations()` | Remet le plateau à zéro pour lancer une nouvelle enquête |
+
+### Méthodes d'inspection (utilisées par P3 pour générer des questions et P4 pour afficher l'état)
+
+| Méthode | Retour |
+| --- | --- |
+| `board.get_room_state(room=None)` | État complet de la pièce (`visited`, `weapons`, `persons`, `sightings`, `clues`) |
+| `board.get_weapons_in_room(room=None)` | Armes trouvées dans la pièce |
+| `board.get_persons_in_room(room=None)` | Personnes actuellement dans la pièce |
+| `board.get_person_timeline(person)` | Historique trié `[{"room": ..., "hour": ...}]` d'une personne |
+| `board.get_unvisited_rooms()` | Pièces pas encore visitées |
+| `board.get_unlocated_weapons()` | Armes dont la pièce est encore inconnue |
+| `board.get_unlocated_persons()` | Personnes sans position ni passage connu |
+| `board.get_summary()` | Snapshot global de l'enquête |
+
+Exemple d'utilisation intégrée :
 
 ```python
 from world import ManorBoard
 
-board = ManorBoard()          # Démarre dans "Cuisine"
-print(board.current_room())   # "Cuisine"
-print(board.next_room())      # "Salon"
-print(board.last_room())      # "Veranda"
+board = ManorBoard()
+board.move_to("Bureau")
+board.mark_room_visited()
+board.set_person_status("Black", "mort", hour=21)
+board.place_person("Black", room="Bureau")
+board.place_weapon("Corde", room="Cuisine")
+board.place_person("Moutarde", room="Cuisine", hour=21)
+
+print(board.get_unlocated_weapons())  # ['Poignard', 'Revolver', 'Chandelier', 'Cle', 'Matraque']
+print(board.get_person_timeline("Moutarde"))  # [{'room': 'Cuisine', 'hour': 21}]
 ```
 
 ---
 
-## 3. Vérification et tests unitaires
+## 4. Vérification et tests unitaires
 
 Lancer les tests de la partie 1 depuis le dossier `LABO3/` :
 
@@ -61,4 +97,4 @@ python3 -m unittest discover -s tests -v
 
 ---
 
-*Prochaines étapes : associations dynamiques entité/pièce/heure (Étape 2), chargement de `faits_initiaux.txt` (Étape 3) et scénario complet d'enquête (Étape 4).*
+*Prochaines étapes : fichier `faits_initiaux.txt` et chargeur au démarrage (Étape 3), puis conception complète du scénario d'enquête (Étape 4).*
