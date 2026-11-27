@@ -1,9 +1,16 @@
 """Tests unitaires pour le module du monde virtuel (`world.py`)."""
 
+from pathlib import Path
+import tempfile
 import unittest
 
-from constants import PERSONS, ROOMS, VICTIM, WEAPONS
-from world import ManorBoard
+from constants import INITIAL_FACTS_FILE, PERSONS, ROOMS, VICTIM, WEAPONS
+from world import (
+    ManorBoard,
+    apply_fact_to_board,
+    apply_initial_facts,
+    load_initial_facts,
+)
 
 
 class TestManorBoardNavigation(unittest.TestCase):
@@ -158,6 +165,65 @@ class TestManorBoardDynamicAssociations(unittest.TestCase):
             board.set_person_status("Black", "disparu")
         with self.assertRaises(ValueError):
             board.record_clue("   ")
+
+
+class TestInitialFactsLoader(unittest.TestCase):
+    """Vérifie le chargement de `faits_initiaux.txt` et la synchronisation du plateau."""
+
+    def test_load_default_initial_facts_file(self):
+        """Le fichier `faits_initiaux.txt` est lisible et ignore commentaires/lignes vides."""
+        facts = load_initial_facts(INITIAL_FACTS_FILE)
+        self.assertGreaterEqual(len(facts), 9)
+        self.assertIn("Black est mort", facts)
+        self.assertIn("Black est mort à 21h", facts)
+        self.assertIn("Black est dans le bureau", facts)
+        self.assertTrue(all(not f.startswith("#") for f in facts))
+
+    def test_apply_initial_facts_updates_board(self):
+        """Appliquer les faits de départ renseigne victime, heure, lieu et statuts."""
+        board = ManorBoard()
+        facts = apply_initial_facts(board, INITIAL_FACTS_FILE)
+        self.assertGreater(len(facts), 0)
+
+        summary = board.get_summary()
+        self.assertEqual(summary["victim"], "Black")
+        self.assertEqual(summary["crime_hour"], 21)
+        self.assertEqual(board.get_persons_in_room("Bureau"), ["Black"])
+        for suspect in PERSONS:
+            self.assertEqual(summary["statuses"][suspect], "vivant")
+
+    def test_apply_fact_handles_accents_weapons_and_hourly_sightings(self):
+        """Prend en charge les variantes avec accents, armes et passages horodatés."""
+        board = ManorBoard()
+        self.assertTrue(apply_fact_to_board(board, "La clé est dans la véranda"))
+        self.assertTrue(apply_fact_to_board(board, "Moutarde était dans la cuisine à 22h"))
+        self.assertTrue(apply_fact_to_board(board, "Black est dans le bureau"))
+        self.assertTrue(apply_fact_to_board(board, "Black a des marques au cou"))
+        self.assertFalse(apply_fact_to_board(board, "Phrase non reconnue sans entité"))
+
+        self.assertEqual(board.get_weapons_in_room("Veranda"), ["Cle"])
+        self.assertEqual(board.get_person_timeline("Moutarde"), [{"room": "Cuisine", "hour": 22}])
+        self.assertEqual(board.get_room_state("Bureau")["clues"], ["MarqueCou"])
+
+    def test_missing_initial_facts_file_raises_error(self):
+        """Lève FileNotFoundError si le chemin fourni n'existe pas."""
+        with self.assertRaises(FileNotFoundError):
+            load_initial_facts("fichier_inexistant_123.txt")
+
+    def test_custom_temp_file_loading(self):
+        """Charge n'importe quel fichier externe sans rien coder en dur."""
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", delete=False) as tmp:
+            tmp.write("# Commentaire\n\nRose est morte\nLe poignard est dans le salon\n")
+            tmp_path = Path(tmp.name)
+
+        try:
+            board = ManorBoard()
+            facts = apply_initial_facts(board, tmp_path)
+            self.assertEqual(facts, ["Rose est morte", "Le poignard est dans le salon"])
+            self.assertEqual(board.get_summary()["victim"], "Rose")
+            self.assertEqual(board.get_weapons_in_room("Salon"), ["Poignard"])
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

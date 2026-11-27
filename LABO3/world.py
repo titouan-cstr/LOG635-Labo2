@@ -5,7 +5,11 @@ Gère les pièces ordonnées du manoir, le déplacement du détective IA
 associations personne / arme / pièce / heure découvertes pendant l'enquête.
 """
 
-from constants import ALL_PERSONS, ROOMS, WEAPONS
+import re
+import unicodedata
+from pathlib import Path
+
+from constants import ALL_PERSONS, INITIAL_FACTS_FILE, ROOMS, WEAPONS
 
 
 class ManorBoard:
@@ -287,3 +291,142 @@ class ManorBoard:
             "unlocated_persons": self.get_unlocated_persons(),
             "rooms": {room: self.get_room_state(room) for room in self.rooms},
         }
+
+
+# ----------------------------------------------------------------------
+# Chargement et synchronisation des faits initiaux (Critère #1.1)
+# ----------------------------------------------------------------------
+
+
+def _normalize_token(text):
+    """Normalise un mot français en minuscule sans accents pour la correspondance."""
+    decomposed = unicodedata.normalize("NFKD", text.strip().lower())
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+
+
+def _lookup_entity(token, valid_entities):
+    """Retourne l'entité officielle correspondant au token, ou None."""
+    normalized = _normalize_token(token)
+    for entity in valid_entities:
+        if _normalize_token(entity) == normalized:
+            return entity
+    return None
+
+
+def load_initial_facts(filepath=INITIAL_FACTS_FILE):
+    """Lit un fichier texte de faits initiaux et retourne les phrases valides.
+
+    Ignore les lignes vides et les commentaires commençant par `#`.
+
+    Args:
+        filepath: Chemin vers le fichier `.txt` (par défaut `INITIAL_FACTS_FILE`).
+
+    Raises:
+        FileNotFoundError: Si le fichier spécifié n'existe pas.
+    """
+    path = Path(filepath)
+    if not path.is_file():
+        raise FileNotFoundError(f"Fichier de faits initiaux introuvable : {path}")
+
+    facts = []
+    with path.open("r", encoding="utf-8") as handle:
+        for raw_line in handle:
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            facts.append(line)
+    return facts
+
+
+def apply_fact_to_board(board, fact):
+    """Synchronise une phrase simple en français avec l'état de `ManorBoard`.
+
+    Prend en charge les formes utilisées dans `faits_initiaux.txt` et dans les
+    grammaires de l'équipe (statut mort/vivant, heure du décès, position d'une
+    personne ou d'une arme, passage horodaté, marque au cou).
+
+    Returns:
+        True si la phrase a été reconnue et appliquée au plateau, False sinon.
+    """
+    cleaned = fact.strip().rstrip(".!?")
+    if not cleaned:
+        return False
+
+    # 1. "<Personne> est mort(e) à <H>h(00)"
+    match = re.fullmatch(r"(\w+)\s+est\s+morte?\s+[aà]\s+(\d{1,2})h(?:00)?", cleaned, re.IGNORECASE)
+    if match:
+        person = _lookup_entity(match.group(1), board.persons)
+        if person:
+            board.set_person_status(person, "mort", hour=int(match.group(2)))
+            return True
+
+    # 2. "<Personne> est mort(e)" ou "<Personne> est vivant(e)"
+    match = re.fullmatch(r"(\w+)\s+est\s+(morte?|vivante?)", cleaned, re.IGNORECASE)
+    if match:
+        person = _lookup_entity(match.group(1), board.persons)
+        if person:
+            status = "mort" if match.group(2).lower().startswith("mort") else "vivant"
+            board.set_person_status(person, status)
+            return True
+
+    # 3. "<Personne> était/se trouvait dans le/la <Pièce> à <H>h(00)"
+    match = re.fullmatch(
+        r"(\w+)\s+(?:était|etait|se\s+trouvait)\s+dans\s+(?:le|la|l')\s*(\w+)\s+[aà]\s+(\d{1,2})h(?:00)?",
+        cleaned,
+        re.IGNORECASE,
+    )
+    if match:
+        person = _lookup_entity(match.group(1), board.persons)
+        room = _lookup_entity(match.group(2), board.rooms)
+        if person and room:
+            board.place_person(person, room=room, hour=int(match.group(3)))
+            return True
+
+    # 4. "<Personne> est/se trouve dans le/la <Pièce>"
+    match = re.fullmatch(
+        r"(\w+)\s+(?:est|se\s+trouve)\s+dans\s+(?:le|la|l')\s*(\w+)",
+        cleaned,
+        re.IGNORECASE,
+    )
+    if match:
+        person = _lookup_entity(match.group(1), board.persons)
+        room = _lookup_entity(match.group(2), board.rooms)
+        if person and room:
+            board.place_person(person, room=room)
+            return True
+
+    # 5. "Le/La <Arme> est/se trouve dans le/la <Pièce>"
+    match = re.fullmatch(
+        r"(?:le|la|l'|un|une)\s*(\w+)\s+(?:est|se\s+trouve|était|etait)\s+dans\s+(?:le|la|l')\s*(\w+)",
+        cleaned,
+        re.IGNORECASE,
+    )
+    if match:
+        weapon = _lookup_entity(match.group(1), board.weapons)
+        room = _lookup_entity(match.group(2), board.rooms)
+        if weapon and room:
+            board.place_weapon(weapon, room=room)
+            return True
+
+    # 6. "<Personne> a des marques / une marque au cou"
+    match = re.fullmatch(
+        r"(\w+)\s+a\s+(?:des\s+marques|une\s+marque)\s+au\s+cou",
+        cleaned,
+        re.IGNORECASE,
+    )
+    if match:
+        person = _lookup_entity(match.group(1), board.persons)
+        if person:
+            room = board._person_current_room.get(person, board.current_room())
+            board.record_clue("MarqueCou", room=room)
+            return True
+
+    return False
+
+
+def apply_initial_facts(board, filepath=INITIAL_FACTS_FILE):
+    """Charge `filepath`, applique les faits reconnus au plateau et retourne les phrases."""
+    facts = load_initial_facts(filepath)
+    for fact in facts:
+        apply_fact_to_board(board, fact)
+    return facts

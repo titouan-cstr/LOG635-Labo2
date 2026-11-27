@@ -1,1 +1,16 @@
-# Liste des faits initiaux
+# Faits initiaux chargés au démarrage de l'enquête (Critère #1.1)
+# Format : une phrase simple en français par ligne (compatible avec les grammaires NLTK).
+# Les lignes vides et les commentaires (#) sont ignorés lors du chargement.
+
+# Découverte de la victime et du lieu initial
+Black est mort
+Black est mort à 21h
+Black est dans le bureau
+
+# Tous les autres personnages du manoir sont vivants
+Moutarde est vivant
+Rose est vivante
+Violet est vivant
+Pervenche est vivante
+Olive est vivant
+Leblanc est vivante

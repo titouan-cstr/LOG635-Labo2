@@ -87,7 +87,35 @@ print(board.get_person_timeline("Moutarde"))  # [{'room': 'Cuisine', 'hour': 21}
 
 ---
 
-## 4. Vérification et tests unitaires
+## 4. Faits initiaux et chargement au démarrage ([faits_initiaux.txt](faits_initiaux.txt))
+
+Au lancement du programme, les faits de départ sont lus depuis `faits_initiaux.txt` (Critère #1.1) afin qu'aucune situation ne soit figée dans le code Python :
+
+- Une phrase simple en français par ligne (format compatible avec les grammaires `.fcfg` de **P3**).
+- Les lignes vides et les lignes commençant par `#` sont ignorées.
+- Contenu de départ : uniquement la découverte de la victime (`Black est mort`, `Black est mort à 21h`, `Black est dans le bureau`) et le statut vivant des 6 suspects. Le reste (armes, déplacements, indices) est recueilli dynamiquement pendant l'enquête.
+
+### Fonctions utilitaires pour P3 et P4 ([world.py](world.py))
+
+| Fonction | Rôle |
+| --- | --- |
+| `load_initial_facts(filepath=INITIAL_FACTS_FILE)` | Lit le fichier texte UTF-8 et retourne `list[str]` des faits propres |
+| `apply_fact_to_board(board, fact)` | Synchronise une phrase française simple avec l'état de `ManorBoard` |
+| `apply_initial_facts(board, filepath=INITIAL_FACTS_FILE)` | Charge le fichier, met à jour `board` et retourne la liste des phrases pour **P3/P2** |
+
+Exemple d'utilisation au démarrage dans `main.py` (**P4**) :
+
+```python
+from world import ManorBoard, apply_initial_facts
+
+board = ManorBoard()
+initial_facts = apply_initial_facts(board)  # Met à jour board et retourne les phrases françaises
+# P3 peut ensuite convertir chaque phrase de `initial_facts` en clause FOL pour P2
+```
+
+---
+
+## 5. Vérification et tests unitaires
 
 Lancer les tests de la partie 1 depuis le dossier `LABO3/` :
 
@@ -97,4 +125,4 @@ python3 -m unittest discover -s tests -v
 
 ---
 
-*Prochaines étapes : fichier `faits_initiaux.txt` et chargeur au démarrage (Étape 3), puis conception complète du scénario d'enquête (Étape 4).*
+*Prochaine étape : conception complète et documentation du scénario d'enquête (Étape 4).*
