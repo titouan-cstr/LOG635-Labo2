@@ -115,14 +115,80 @@ initial_facts = apply_initial_facts(board)  # Met à jour board et retourne les 
 
 ---
 
-## 5. Vérification et tests unitaires
+## 5. Scénario complet d'enquête (Critère #7 & Rapport)
 
-Lancer les tests de la partie 1 depuis le dossier `LABO3/` :
+> **Important (Critère #5) :** Ce scénario n'est **pas codé en dur** dans `world.py`. Il sert de trame de référence pour la démo, les tests d'intégration avec **P2 / P3 / P4** et la section « Scénario et faits » du rapport PDF.
+
+### 5.1 Résumé et solution attendue (QUI / COMMENT / OÙ / QUAND)
+
+| Élément | Valeur | Justification logique |
+| --- | --- | --- |
+| **Victime** | `Black` | Fourni dans `faits_initiaux.txt` (`Black est mort`) |
+| **QUI (Coupable)** | `Moutarde` | Présent dans le `Bureau` à `21h` et retrouvé à `22h` dans la `Cave` avec la `Corde` |
+| **COMMENT (Arme)** | `Corde` | `Black` présente des marques au cou (`MarqueCou(Black)`), incompatibles avec le `Poignard` |
+| **OÙ (Lieu)** | `Bureau` | Corps de `Black` retrouvé dans le `Bureau` |
+| **QUAND (Heure)** | `21h` | Heure estimée du décès (`Black est mort à 21h`) |
+
+**Phrase finale attendue (Critère #9) :**
+> `Colonel Moutarde a tué Monsieur Black dans le bureau avec une corde à 21h`
+
+---
+
+### 5.2 Répartition des armes et fausses pistes dans les 6 pièces
+
+| Pièce (ordre) | Arme découverte | Indice / rôle dans l'enquête |
+| --- | --- | --- |
+| `Cuisine` | `Chandelier` | Arme innocente (pas de trace de coup) |
+| `Salon` | `Revolver` | Arme innocente (aucun coup de feu entendu) |
+| `Bureau` | `Poignard` | **Fausse piste n°1 :** arme trouvée sur la scène du crime, mais aucune blessure par lame (`MarqueCou(Black)` oriente vers la `Corde`) |
+| `Chambre` | `Matraque` | Arme innocente |
+| `Cave` | `Corde` | **Arme du crime :** cachée au sous-sol après l'étranglement |
+| `Veranda` | `Cle` | Arme innocente (clé anglaise de jardinage) |
+
+---
+
+### 5.3 Chronologie des suspects et alibis
+
+| Suspect | Statut | À `21h` (heure du crime) | À `22h` (`UneHeureApresCrime`) | Conclusion |
+| --- | --- | --- | --- | --- |
+| `Moutarde` | Vivant | `Bureau` (avec `Black`, sans témoin) | `Cave` (pièce de la `Corde`) | **Coupable / Suspect** |
+| `Pervenche` | Vivante | `Salon` (avec `Rose`, alibi mutuel) | `Bureau` (découvre le corps + `Poignard`) | **Fausse piste n°2** — Innocente |
+| `Olive` | Vivant | `Veranda` (seul, dispute avec `Black` à `20h`) | `Veranda` (arme sur place : `Cle`) | **Fausse piste n°3** — Innocent |
+| `Rose` | Vivante | `Salon` (avec `Pervenche`) | `Salon` (arme sur place : `Revolver`) | Innocente |
+| `Violet` | Vivant | `Cuisine` | `Cuisine` (arme sur place : `Chandelier`) | Innocent |
+| `Leblanc` | Vivante | `Chambre` | `Chambre` (arme sur place : `Matraque`) | Innocente |
+
+---
+
+### 5.4 Déroulement type des interactions (guide pour P3 et P4)
+
+1. **Démarrage (Canal 1 — fichier texte)** : chargement de `faits_initiaux.txt` via `apply_initial_facts(board)`.
+2. **Navigation par les flèches (`→ ← ↑ ↓`) et questions/réponses (Canaux 2, 3, 4)** :
+   - **Dans `Cuisine`** : `Le chandelier est dans la cuisine`, `Violet était dans la cuisine à 22h`.
+   - **Dans `Salon`** : `Le revolver est dans le salon`, `Rose était dans le salon à 22h`.
+   - **Dans `Bureau`** (scène du crime) : `Black a des marques au cou` *(ex. réponse vocale, Critère #2.1)*, `Le poignard est dans le bureau`, `Pervenche était dans le bureau à 22h` *(fausse piste, mais innocente car `Poignard != Corde`)*.
+   - **Dans `Chambre`** : `La matraque est dans la chambre`, `Leblanc était dans la chambre à 22h`.
+   - **Dans `Cave`** : `La corde est dans la cave`, question oui/non avec touche **`1`** (`Oui`, Critère #3.2) pour confirmer `Moutarde était dans la cave à 22h`.
+   - **Dans `Veranda`** : `La clé est dans la véranda`, `Olive était dans la véranda à 22h`.
+3. **Déduction finale (P2 + annonce TTS P4, Critère #2.2 & #9)** :
+   - `PieceCrime = Bureau`, `ArmeCrime = Corde`, `Victime = Black`, `HeureCrime = 21`, `Suspect = Moutarde`, `Innocents = [Black, Violet, Rose, Pervenche, Leblanc, Olive]`.
+
+---
+
+### 5.5 Notes d'interface importantes pour l'équipe (P2 / P3 / P4)
+
+- **Attention pour P2 ([inference_engine.py](inference_engine.py)) :**
+  1. La ligne 109 contient `Piece_Arme(y, x)` au lieu de `Arme_Piece(y, x)`.
+  2. La règle `PieceCrime(x) & Arme(y) & Arme_Piece(y, x) ==> ArmeCrime(y)` désignerait à tort le `Poignard` (fausse piste présente dans le `Bureau`) si elle n'est pas conditionnée par l'indice médico-légal (`MarqueCou(x) ==> ArmeCrime(Corde)`).
+  3. Pour innocenter `Pervenche` (présente à `22h` dans le `Bureau`, même pièce que le crime, où se trouve le `Poignard`), P2 peut utiliser son alibi à `21h` (`Salon`) ou le fait que l'arme du `Bureau` (`Poignard`) diffère de `Corde`.
+- **Attention pour P3 (`grammars/*.fcfg`) :** mettre à jour les lexiques des `.fcfg` avec les noms exacts de [constants.py](constants.py) (`Moutarde`, `Rose`, `Violet`, `Pervenche`, `Olive`, `Leblanc`, `Black`, `Corde`, `Poignard`, `Revolver`, `Chandelier`, `Cle`, `Matraque`, `Cuisine`, `Salon`, `Bureau`, `Chambre`, `Cave`, `Veranda`).
+
+---
+
+## 6. Vérification et tests unitaires
+
+Lancer les tests complets de la partie 1 depuis le dossier `LABO3/` :
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
-
----
-
-*Prochaine étape : conception complète et documentation du scénario d'enquête (Étape 4).*

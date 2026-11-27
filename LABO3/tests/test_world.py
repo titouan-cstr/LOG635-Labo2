@@ -226,5 +226,44 @@ class TestInitialFactsLoader(unittest.TestCase):
             tmp_path.unlink(missing_ok=True)
 
 
+class TestFullScenarioWorkflow(unittest.TestCase):
+    """Vérifie que `ManorBoard` supporte le déroulement complet du scénario P1."""
+
+    def test_complete_investigation_scenario_execution(self):
+        """Simule la traversée des 6 pièces et la saisie dynamique du scénario."""
+        board = ManorBoard()
+        apply_initial_facts(board, INITIAL_FACTS_FILE)
+
+        # Navigation et saisie des découvertes pièce par pièce
+        discoveries = [
+            ("Cuisine", "Chandelier", "Violet", 22, None),
+            ("Salon", "Revolver", "Rose", 22, None),
+            ("Bureau", "Poignard", "Pervenche", 22, "MarqueCou"),
+            ("Chambre", "Matraque", "Leblanc", 22, None),
+            ("Cave", "Corde", "Moutarde", 22, None),
+            ("Veranda", "Cle", "Olive", 22, None),
+        ]
+
+        for expected_room, weapon, person, hour, clue in discoveries:
+            self.assertEqual(board.current_room(), expected_room)
+            board.mark_room_visited()
+            board.place_weapon(weapon)
+            board.place_person(person, hour=hour)
+            if clue:
+                board.record_clue(clue)
+            board.next_room()
+
+        # Vérifie que toutes les pièces, armes et personnes ont bien été couvertes
+        self.assertEqual(board.get_unvisited_rooms(), [])
+        self.assertEqual(board.get_unlocated_weapons(), [])
+        self.assertEqual(board.get_unlocated_persons(), [])
+        self.assertEqual(board.get_room_state("Bureau")["clues"], ["MarqueCou"])
+        self.assertEqual(board.get_room_state("Cave")["weapons"], ["Corde"])
+        self.assertEqual(
+            board.get_person_timeline("Moutarde"),
+            [{"room": "Cave", "hour": 22}],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
